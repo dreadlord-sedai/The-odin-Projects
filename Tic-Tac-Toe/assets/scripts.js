@@ -58,10 +58,16 @@ const GameController = (() => {
 
     if (checkWin()) {
       gameOver = true;
-      return `${currentPlayer.name} wins!`;
+      DisplayController.resultDisplay.textContent = `${currentPlayer.name} wins!`;
+      // Disable the board to prevent further moves
+      DisplayController.boardContainer.style.pointerEvents = "none";
+      return;
     } else if (checkTie()) {
       gameOver = true;
-      return "It's a tie!";
+      DisplayController.resultDisplay.textContent = "It's a tie!";
+      // Disable the board to prevent further moves
+      DisplayController.boardContainer.style.pointerEvents = "none";
+      return;
     }
     switchPlayer();
   };
@@ -90,12 +96,12 @@ const GameController = (() => {
       [2, 4, 6], // Diagonals
     ];
     return winPatterns.some((pattern) =>
-      pattern.every((i) => b[i] === currentPlayer.marker)
+      pattern.every((i) => board[i] === currentPlayer.mark)
     );
   };
 
   const checkTie = () => {
-    return GameBoard.getBoard().every(cell => cell !== "");
+    return GameBoard.getBoard().every((cell) => cell !== null);
   };
 
   return { startGame, playTurn };
@@ -103,27 +109,55 @@ const GameController = (() => {
 
 // UI Module DOM Manipulation
 const DisplayController = (() => {
-    const boardContainer = document.querySelector(".board");
-    const resultDisplay = document.quesrySelector(".result");
+  const boardContainer = document.querySelector(".board");
+  const resultDisplay = document.querySelector(".result");
 
+  /**
+   * Renders the game board on the page by creating a cell for each cell in the GameBoard.
+   * Also adds an event listener to each cell to call the GameController.playTurn method
+   * when the cell is clicked.
+   */
+  const renderBoard = () => {
+    boardContainer.innerHTML = "";
+    GameBoard.getBoard().forEach((mark, index) => {
+      const cell = document.createElement("div");
+      cell.classList.add("cell");
+      cell.textContent = mark;
+      cell.addEventListener("click", () => {
+        const result = GameController.playTurn(index);
+        renderBoard();
+        if (result) resultDisplay.textContent = result;
+      });
+      boardContainer.appendChild(cell);
+    });
+  };
 
-    /**
-     * Renders the game board on the page by creating a cell for each cell in the GameBoard.
-     * Also adds an event listener to each cell to call the GameController.playTurn method
-     * when the cell is clicked.
-     */
-    const renderBoard = () => {
-        boardContainer.innerHTML = "";
-        GameBoard.getBoard().forEach((mark, index) => {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            cell.textContent = mark;
-            cell.addEventListener("click", () => {
-              const result = GameController.playTurn(index);
-              renderBoard();
-              if (result) resultDisplay.textContent = result;
-            });
-            boardContainer.appendChild(cell);
-        });
-    };
+  return { renderBoard, boardContainer, resultDisplay };
+})();
+
+// Get the start button element
+const startButton = document.getElementById("startBtn");
+
+// Add an event listener to the start button
+startButton.addEventListener("click", () => {
+  // Get the player names from the input fields
+  const player1Name = document.getElementById("player1").value;
+  const player2Name = document.getElementById("player2").value;
+
+  // Call the startGame function with the player names
+  GameController.startGame(player1Name, player2Name);
+
+  // Render the game board
+  DisplayController.renderBoard();
 });
+
+
+// Get the restart button element
+const restartButton = document.getElementById("restartBtn");
+restartButton.addEventListener("click", () => {
+  GameBoard.resetBoard();
+  DisplayController.renderBoard();
+  DisplayController.resultDisplay.textContent = "";
+  DisplayController.boardContainer.style.pointerEvents = "auto";
+});
+
