@@ -94,7 +94,36 @@ const GameController = (() => {
     );
   };
 
-  
+  const checkTie = () => {
+    return GameBoard.getBoard().every(cell => cell !== "");
+  };
+
+  return { startGame, playTurn };
 })();
 
-//
+// UI Module DOM Manipulation
+const DisplayController = (() => {
+    const boardContainer = document.querySelector(".board");
+    const resultDisplay = document.quesrySelector(".result");
+
+
+    /**
+     * Renders the game board on the page by creating a cell for each cell in the GameBoard.
+     * Also adds an event listener to each cell to call the GameController.playTurn method
+     * when the cell is clicked.
+     */
+    const renderBoard = () => {
+        boardContainer.innerHTML = "";
+        GameBoard.getBoard().forEach((mark, index) => {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            cell.textContent = mark;
+            cell.addEventListener("click", () => {
+              const result = GameController.playTurn(index);
+              renderBoard();
+              if (result) resultDisplay.textContent = result;
+            });
+            boardContainer.appendChild(cell);
+        });
+    };
+});
