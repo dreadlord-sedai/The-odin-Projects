@@ -36,16 +36,68 @@ const App = (() => {
   };
 
   const addTodoToActiveProject = (todoData) => {
-    const todo = new Todo(...todoData);
+    // Using an object is more robust than an array with spread syntax.
+    // It avoids issues if the order of parameters changes.
+    const todo = new Todo(
+      todoData.title,
+      todoData.description,
+      todoData.dueDate,
+      todoData.priority,
+      todoData.notes,
+      todoData.checklist
+    );
     projects[activeProjectIndex].addTodo(todo);
     Storage.saveProjects(projects);
     UI.renderTodos(projects[activeProjectIndex]);
+  };
+
+  const setActiveProject = (index) => {
+    if (index >= 0 && index < projects.length) {
+      activeProjectIndex = index;
+      UI.renderProjects(projects, activeProjectIndex);
+      UI.renderTodos(projects[activeProjectIndex]);
+    }
+  };
+
+  const deleteProject = (index) => {
+    if (index < 0 || index >= projects.length) return;
+
+    projects.splice(index, 1);
+
+    if (projects.length === 0) {
+      projects.push(new Project('Default'));
+      activeProjectIndex = 0;
+    } else if (activeProjectIndex >= index) {
+      activeProjectIndex = Math.max(0, activeProjectIndex - 1);
+    }
+
+    Storage.saveProjects(projects);
+    setActiveProject(activeProjectIndex);
+  };
+
+  const deleteTodo = (todoIndex) => {
+    projects[activeProjectIndex]?.removeTodo(todoIndex);
+    Storage.saveProjects(projects);
+    UI.renderTodos(projects[activeProjectIndex]);
+  };
+
+  const toggleTodoComplete = (todoIndex) => {
+    const todo = projects[activeProjectIndex]?.todos[todoIndex];
+    if (todo) {
+      todo.toggleComplete();
+      Storage.saveProjects(projects);
+      UI.renderTodos(projects[activeProjectIndex]);
+    }
   };
 
   return {
     init,
     addProject,
     addTodoToActiveProject,
+    setActiveProject,
+    deleteProject,
+    deleteTodo,
+    toggleTodoComplete,
   };
 })();
 
